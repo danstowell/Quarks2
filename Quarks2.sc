@@ -64,6 +64,7 @@ Quarks2 {
 
 		//this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion]["fetchInfo"])
 		"this.fetch(%, %, %, %)".format(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion.asString]["fetchInfo"]).postln;
+		this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion.asString]["fetchInfo"])
 	}
 
 	// Adds a local quark to LanguageConfig, ensuring not a duplicate entry
@@ -89,7 +90,7 @@ Quarks2 {
 	*fetch { | uri, path, method, fetchInfo, singlefile=false |
 		// "fetchInfo" is extra information for retrieving that might not fit in the URI - for git sources, for example, it gives the TAG (if not present, assume it's the version#)
 		// If "path" already exists, this is an "update"-type operation. Otherwise it's a first-time.
-		var firstTime = File.exists(path);
+		var firstTime = File.exists(path).not;
 		method = (method ?? { uri.split($:).at(0) }).asSymbol;
 		method.switch(
 			\file, {
@@ -100,6 +101,23 @@ Quarks2 {
 				//if(firstTime.not){File.delete(uri)};
 				File.mkdir(path.dirname);
 				File.copy(uri, path);
+			},
+			\http, {
+				uri.curl(path)	
+			},
+			\git, {
+				var escapedPath = path.escapeChar($ );
+				if( firstTime) {
+					("git clone "++uri++" "++escapedPath
+					++ (fetchInfo !? { |tag|
+					(" && cd "++escapedPath++" && git checkout "++tag)
+					} ?? "" 
+					) ).postln.runInTerminal;
+				} {
+					(fetchInfo !? { |tag|
+					("cd "++escapedPath++" && git checkout "++tag)
+					} ?? "").postln.runInTerminal;
+				}				
 			},
 			{
 				Error("Unrecognised fetch method: %".format(method)).throw;

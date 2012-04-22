@@ -1,3 +1,3 @@
-homebake: file:///home/dan/.local/share/SuperCollider/Extensions/Quarks2/homebake.yaml
-miguel: http://miguel-negrao.github.com/Quarks/myquarks.yaml
+homebake: file:///Users/miguelnegrao/Library/Application Support/SuperCollider/Extensions/Quarks2/homebake.yaml
+miguelnegrao: http://miguel-negrao.github.com/myquarks.yaml
 

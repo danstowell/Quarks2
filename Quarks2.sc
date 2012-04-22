@@ -106,7 +106,7 @@ Quarks2 {
 				uri.curl(path)	
 			},
 			\git, {
-				var escapedPath = path.escapeChar($ );
+				var escapedPath = path.shellQuote;
 				if( firstTime) {
 					("git clone "++uri++" "++escapedPath
 					++ (fetchInfo !? { |tag|

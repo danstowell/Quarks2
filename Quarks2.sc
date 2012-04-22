@@ -90,10 +90,7 @@ Quarks2 {
 		// "fetchInfo" is extra information for retrieving that might not fit in the URI - for git sources, for example, it gives the TAG (if not present, assume it's the version#)
 		// If "path" already exists, this is an "update"-type operation. Otherwise it's a first-time.
 		var firstTime = File.exists(path);
-		if(method.isNil){
-			method = \file;
-			if(uri[..3]=="git:"){ method=\git };
-		};
+		method = (method ?? { uri.split($:).at(0) }).asSymbol;
 		method.switch(
 			\file, {
 				if(uri[..6] == "file://"){ uri = uri[7..]};

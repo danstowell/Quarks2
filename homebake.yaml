@@ -1,0 +1,20 @@
+{
+cruciallib: {
+        method: git,
+        uri: "git://github.com/crucial/cruciallib.git",
+        version: {
+                0.1: {
+                        compat: [3.5, 3.6],
+                        where: "V01.yeah"    # this is a git tag
+                },
+                0.2: {
+                        compat: [3.6],
+                        where: "V02.yeah"
+                }
+                }
+        },
+crucialcookery: {
+        uri: "http://www.crucialsystems.com/crucialcookbook/scclasses"
+        }
+}
+

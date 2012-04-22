@@ -101,6 +101,9 @@ Quarks2 {
 				File.mkdir(path.dirname);
 				File.copy(uri, path);
 			},
+			\http, {
+				uri.curl(path)	
+			},
 			{
 				Error("Unrecognised fetch method: %".format(method)).throw;
 			}

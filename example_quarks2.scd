@@ -14,4 +14,5 @@ Quarks2.fetchQuark("cruciallib", "3.4", "0.2")
 Quarks2.installQuark("cruciallib", "3.4", "0.2")
 
 
-
+//this should work
+Quarks2.getQuark("Modality", "3.5", "0.1")

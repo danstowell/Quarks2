@@ -58,12 +58,12 @@ Quarks2 {
 		var quarkmeta, foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
 		folderpath = cupboardpath +/+ foldername;
 
-		// Ask the quark what its [method, uri, where] are, then pass them to the *fetch
+		// Ask the quark what its [method, uri, fetchInfo] are, then pass them to the *fetch
 		quarkmeta = (quarklist ?? {this.getQuarksInfo})[name.asString];
 		if(quarkmeta.isNil){ Error("Quark '%' not found in metadata".format(name)).throw };
 
-		//this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion]["where"])
-		"this.fetch(%, %, %, %)".format(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion.asString]["where"]).postln;
+		//this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion]["fetchInfo"])
+		"this.fetch(%, %, %, %)".format(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion.asString]["fetchInfo"]).postln;
 	}
 
 	// Adds a local quark to LanguageConfig, ensuring not a duplicate entry
@@ -86,8 +86,8 @@ Quarks2 {
 	}
 
 	// Generic method for fetching something from elsewhere. Nothing quark-specific in here.
-	*fetch { | uri, path, method, where, singlefile=false |
-		// "where" is extra information for retrieving that might not fit in the URI - for git sources, for example, it is a TAG
+	*fetch { | uri, path, method, fetchInfo, singlefile=false |
+		// "fetchInfo" is extra information for retrieving that might not fit in the URI - for git sources, for example, it gives the TAG (if not present, assume it's the version#)
 		// If "path" already exists, this is an "update"-type operation. Otherwise it's a first-time.
 		var firstTime = File.exists(path);
 		if(method.isNil){

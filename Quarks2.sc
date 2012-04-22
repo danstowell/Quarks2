@@ -67,13 +67,13 @@ Quarks2 {
 	}
 
 	// Adds a local quark to LanguageConfig, ensuring not a duplicate entry
-	*installQuark {|name, scversion, quarkversion|
+	*install {|name, scversion, quarkversion|
 		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
 		folderpath = cupboardpath +/+ foldername;
 
 		// NOT DONE
 	}
-	*uninstallQuark {|name, scversion, quarkversion|
+	*uninstall {|name, scversion, quarkversion|
 		// NOT DONE
 	}
 

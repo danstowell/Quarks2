@@ -115,10 +115,12 @@ Quarks2 {
 					} ?? "" 
 					) ).postln.runInTerminal;
 				} {
-					(fetchInfo !? { |tag|
-					("cd "++escapedPath++" && git checkout "++tag)
-					} ?? "").postln.runInTerminal;
-				}				
+					("git fetch"
+					++ (fetchInfo !? { |tag|
+					(" && cd "++escapedPath++" && git checkout "++tag)
+					} ?? ""
+					) ).postln.runInTerminal;
+				}
 			},
 			{
 				Error("Unrecognised fetch method: %".format(method)).throw;

@@ -108,10 +108,11 @@ Quarks2 {
 				File.copy(uri, path);
 			},
 			\http, {
-				uri.curl(path)	
+				var cmd = "curl % -o %".format(uri.shellQuote, path.shellQuote); // dependency: curl
+				cmd.systemCmd
 			},
 			\git, {
-				var escapedPath = path.escapeChar($ );
+				var escapedPath = path.shellQuote;
 				if( firstTime) {
 					("git clone "++uri++" "++escapedPath
 					++ (fetchInfo !? { |tag|
@@ -119,10 +120,12 @@ Quarks2 {
 					} ?? "" 
 					) ).postln.runInTerminal;
 				} {
-					(fetchInfo !? { |tag|
-					("cd "++escapedPath++" && git checkout "++tag)
-					} ?? "").postln.runInTerminal;
-				}				
+					("git fetch"
+					++ (fetchInfo !? { |tag|
+					(" && cd "++escapedPath++" && git checkout "++tag)
+					} ?? ""
+					) ).postln.runInTerminal;
+				}
 			},
 			{
 				Error("Unrecognised fetch method: %".format(method)).throw;

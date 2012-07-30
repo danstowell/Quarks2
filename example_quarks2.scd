@@ -1,4 +1,3 @@
-
 // Re-grab the metadata for available quarks
 Quarks2.refresh
 
@@ -15,4 +14,4 @@ Quarks2.installQuark("cruciallib", "3.4", "0.2")
 
 
 //this should work
-Quarks2.getQuark("Modality", "3.5", "0.1")
+Quarks2.getQuark("Quarks2Test", "3.5", "0.1")

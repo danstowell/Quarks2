@@ -72,11 +72,16 @@ Quarks2 {
 		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
 		folderpath = cupboardpath +/+ foldername;
 
-		// NOT DONE
+        LanguageConfig.addIncludePath( folderpath );
+        LanguageConfig.store;
 	}
 	*uninstall {|name, scversion, quarkversion|
-		// NOT DONE
-	}
+		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
+		folderpath = cupboardpath +/+ foldername;
+
+        LanguageConfig.removeIncludePath( folderpath );
+        LanguageConfig.store;
+    }
 
 	*quarkFolderName {|name, scversion, quarkversion|
 		^"%-%-%".format(name, scversion, quarkversion);

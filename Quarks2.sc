@@ -72,16 +72,16 @@ Quarks2 {
 		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
 		folderpath = cupboardpath +/+ foldername;
 
-        LanguageConfig.addIncludePath( folderpath );
-        LanguageConfig.store;
+		LanguageConfig.addIncludePath( folderpath );
+		LanguageConfig.store;
 	}
 	*uninstall {|name, scversion, quarkversion|
 		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
 		folderpath = cupboardpath +/+ foldername;
 
-        LanguageConfig.removeIncludePath( folderpath );
-        LanguageConfig.store;
-    }
+		LanguageConfig.removeIncludePath( folderpath );
+		LanguageConfig.store;
+	}
 
 	*quarkFolderName {|name, scversion, quarkversion|
 		^"%-%-%".format(name, scversion, quarkversion);
@@ -100,7 +100,7 @@ Quarks2 {
 		method.switch(
 			\file, {
 				if(uri[..6] == "file://"){ uri = uri[7..]};
-				if(File.exists(uri).not){ 
+				if(File.exists(uri).not){
 					Error("File path not found: %".format(uri)).throw;
 				};
 				//if(firstTime.not){File.delete(uri)};
@@ -115,15 +115,15 @@ Quarks2 {
 				var escapedPath = path.shellQuote;
 				if( firstTime) {
 					("git clone "++uri++" "++escapedPath
-					++ (fetchInfo !? { |tag|
-					(" && cd "++escapedPath++" && git checkout "++tag)
-					} ?? "" 
+						++ (fetchInfo !? { |tag|
+							(" && cd "++escapedPath++" && git checkout "++tag)
+							} ?? ""
 					) ).postln.runInTerminal;
 				} {
 					("git fetch"
-					++ (fetchInfo !? { |tag|
-					(" && cd "++escapedPath++" && git checkout "++tag)
-					} ?? ""
+						++ (fetchInfo !? { |tag|
+							(" && cd "++escapedPath++" && git checkout "++tag)
+							} ?? ""
 					) ).postln.runInTerminal;
 				}
 			},

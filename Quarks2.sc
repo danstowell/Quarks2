@@ -53,41 +53,54 @@ Quarks2 {
 		^quarks
 	}
 
+
 	// Downloads a quark from source-->cupboard
 	*fetchQuark { |name, scversion, quarkversion, quarklist|
-		var quarkmeta, foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
+		var quarkmeta, foldername, folderpath;
+		quarklist = quarklist ?? {this.getQuarksInfo};
+		scversion = this.checkSCVersion(scversion);
+		quarkversion = this.checkQuarkVersion(name, scversion, quarkversion, quarklist);
+		foldername = this.quarkFolderName(name, scversion, quarkversion);
 		folderpath = cupboardpath +/+ foldername;
 
 		// Ask the quark what its [method, uri, fetchInfo] are, then pass them to the *fetch
-		quarkmeta = (quarklist ?? {this.getQuarksInfo})[name.asString];
+		quarkmeta = quarklist[name.asString];
 		if(quarkmeta.isNil){ Error("Quark '%' not found in metadata".format(name)).throw };
 
 		//this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion]["fetchInfo"])
-		"this.fetch(%, %, %, %)".format(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion.asString]["fetchInfo"]).postln;
+		"this.fetch(%, %, %, %)".format(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion.asString]["fetchInfo"]);
 		this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion.asString]["fetchInfo"])
 	}
 
-	// Adds a local quark to LanguageConfig, ensuring not a duplicate entry
-	*install {|name, scversion, quarkversion|
-		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
-		folderpath = cupboardpath +/+ foldername;
+	*cupboardPathForQuark { |name, scversion, quarkversion, quarklist|
+		var foldername;
+		scversion = this.checkSCVersion(scversion);
+		quarkversion = this.checkQuarkVersion(name, scversion, quarkversion, quarklist);
+		foldername = this.quarkFolderName(name, scversion, quarkversion);
+		^cupboardpath +/+ foldername;
+	}
 
+	// Adds a local quark to LanguageConfig, ensuring not a duplicate entry
+	*install {|name, scversion, quarkversion, quarklist|
+		var folderpath;
+		quarklist = quarklist ?? {this.getQuarksInfo};
+		folderpath = this.cupboardPathForQuark(name, scversion, quarkversion, quarklist);
 		LanguageConfig.addIncludePath( folderpath );
 		LanguageConfig.store;
 	}
-	*uninstall {|name, scversion, quarkversion|
-		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
-		folderpath = cupboardpath +/+ foldername;
-
+	*uninstall {|name, scversion, quarkversion, quarklist|
+		var folderpath;
+		quarklist = quarklist ?? {this.getQuarksInfo};
+		folderpath = this.cupboardPathForQuark(name, scversion, quarkversion, quarklist);
 		LanguageConfig.removeIncludePath( folderpath );
 		LanguageConfig.store;
 	}
 
 	*quarkFolderName {|name, scversion, quarkversion|
-		^"%-%-%".format(name, scversion, quarkversion);
+		scversion = this.checkSCVersion(scversion);
+		quarkversion = this.checkQuarkVersion(name, scversion, quarkversion);
+		^"%-%-%".format(name, scversion, quarkversion );
 		// TODO LATER:
-		//   - if scversion unset, use current major version
-		//   - if quarkversion unset, use latest compatible
 		//   - also somehow allow for unversioned paths (for installing by bare URL with no metadata)
 	}
 
@@ -141,5 +154,45 @@ Quarks2 {
 		);
 	}
 
+	*checkSCVersion { |scversion|
+		^scversion ?? { "%.%".format(Main.scVersionMajor, Main.scVersionMinor); }
+	}
+
+	//no sc version supplied -> use current
+	//no quark version supplied -> use most recent version compatible with with current sc version
+	//quark and sc version supplied -> check that quark version exists and is compatabile with supercollider.
+	*checkQuarkVersion { |name, scversion, quarkversion, quarklist|
+		quarkversion = quarkversion ?? {
+			quarklist = quarklist ?? {this.getQuarksInfo};
+			quarklist[name]["version"]
+			.collect{ |x|
+				var compat = x["compat"];
+				compat.isNil or: {
+					(compat.asArray.size == 0) or: { compat.includesEqual(scversion) }
+				}
+			}
+			.select{ |x| x }
+			.keys.asArray.sort.last
+		};
+
+		if( quarkversion.isNil ) {
+			Error("There is no version of the quark % compatible with the current SuperCollider Version (%).".format(name, scversion) ).throw
+		} {
+			var version;
+			quarklist = quarklist ?? {this.getQuarksInfo};
+			version = quarklist[name]["version"][quarkversion];
+			if( version.isNil ) {
+				Error("Version % of quark % does not exist.".format(quarkversion, name) ).throw
+			} {
+				var compat = version["compat"];
+				if( compat.notNil and: { compat.includesEqual( scversion ).not } ) {
+					Error("Version % of the quark % is not compatible with  version % of SuperCollider.".format(quarkversion, name, scversion) ).throw
+				}
+
+			}
+		};
+		^quarkversion
+
+	}
 }
 

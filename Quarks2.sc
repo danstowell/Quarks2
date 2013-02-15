@@ -113,24 +113,26 @@ Quarks2 {
 			},
 			\git, {
 				var escapedPath = path.shellQuote;
+				var escapedUri  = uri.shellQuote;
 				if( firstTime) {
-					("git clone "++uri++" "++escapedPath
+					("git clone "++escapedUri++" "++escapedPath
 						++ (fetchInfo !? { |tag|
 							(" && cd "++escapedPath++" && git checkout "++tag)
 							} ?? ""
 					) ).postln.runInTerminal;
 				} {
-					("git fetch"
+					("cd" + escapedPath + "&& git fetch"
 						++ (fetchInfo !? { |tag|
-							(" && cd "++escapedPath++" && git checkout "++tag)
+							(" && git checkout "++tag)
 							} ?? ""
 					) ).postln.runInTerminal;
 				}
 			},
 			\svn, {
 				var escapedPath = path.shellQuote;
+				var escapedUri  = uri.shellQuote;
 				if( firstTime) {
-					("svn checkout" + uri + escapedPath).postln.runInTerminal;
+					("svn checkout" + escapedUri + escapedPath).postln.runInTerminal;
 				} {
 					("svn update" + escapedPath).postln.runInTerminal;
 				}

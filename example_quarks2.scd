@@ -12,6 +12,5 @@ Quarks2.fetchQuark("cruciallib", "3.4", "0.2")
 // Not implemented yet
 Quarks2.installQuark("cruciallib", "3.4", "0.2")
 
-
 //this should work
-Quarks2.getQuark("Quarks2Test", "3.5", "0.1")
+Quarks2.fetchQuark("Quarks2Test", "3.5", "0.1")

@@ -42,7 +42,7 @@ Quarks2 {
 				"quarkINFO".postln;
 				quarkinfo.postln;
 				if(quarks[quarkname].notNil){
-					"getQuarkInfo skipping '%' from source '%' because of nameclash with another quark".format(quarkname, sourcename).warn;
+					"getQuarksInfo skipping '%' from source '%' because of nameclash with another quark".format(quarkname, sourcename).warn;
 				}{
 					quarkinfo.grow; // Seems needed to ensure insertion of new key will succeed (!!)
 					quarkinfo["source"] = sourcename;
@@ -54,7 +54,7 @@ Quarks2 {
 	}
 
 	// Downloads a quark from source-->cupboard
-	*getQuark { |name, scversion, quarkversion, quarklist|
+	*fetchQuark { |name, scversion, quarkversion, quarklist|
 		var quarkmeta, foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
 		folderpath = cupboardpath +/+ foldername;
 

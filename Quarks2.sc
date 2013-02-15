@@ -53,9 +53,13 @@ Quarks2 {
 		^quarks
 	}
 
+
 	// Downloads a quark from source-->cupboard
 	*fetchQuark { |name, scversion, quarkversion, quarklist|
-		var quarkmeta, foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
+		var quarkmeta, foldername, folderpath;
+		scversion = this.checkSCVersion(scversion);
+		quarkversion = this.checkQuarkVersion(name, scversion, quarkversion);
+		foldername = this.quarkFolderName(name, scversion, quarkversion);
 		folderpath = cupboardpath +/+ foldername;
 
 		// Ask the quark what its [method, uri, fetchInfo] are, then pass them to the *fetch
@@ -67,27 +71,31 @@ Quarks2 {
 		this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion.asString]["fetchInfo"])
 	}
 
+	*cupboardPathForQuark { |name, scversion, quarkversion|
+		var foldername;
+		scversion = this.checkSCVersion(scversion);
+		quarkversion = this.checkQuarkVersion(name, scversion, quarkversion);
+		foldername = this.quarkFolderName(name, scversion, quarkversion);
+		^cupboardpath +/+ foldername;
+	}
+
 	// Adds a local quark to LanguageConfig, ensuring not a duplicate entry
 	*install {|name, scversion, quarkversion|
-		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
-		folderpath = cupboardpath +/+ foldername;
-
+		var folderpath = this.cupboardPathForQuark(name, scversion, quarkversion);
 		LanguageConfig.addIncludePath( folderpath );
 		LanguageConfig.store;
 	}
 	*uninstall {|name, scversion, quarkversion|
-		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
-		folderpath = cupboardpath +/+ foldername;
-
+		var folderpath = this.cupboardPathForQuark(name, scversion, quarkversion);
 		LanguageConfig.removeIncludePath( folderpath );
 		LanguageConfig.store;
 	}
 
 	*quarkFolderName {|name, scversion, quarkversion|
-		^"%-%-%".format(name, scversion, quarkversion);
+		scversion = this.checkSCVersion(scversion);
+		quarkversion = this.checkQuarkVersion(name, scversion, quarkversion);
+		^"%-%-%".format(name, scversion, quarkversion );
 		// TODO LATER:
-		//   - if scversion unset, use current major version
-		//   - if quarkversion unset, use latest compatible
 		//   - also somehow allow for unversioned paths (for installing by bare URL with no metadata)
 	}
 
@@ -139,6 +147,29 @@ Quarks2 {
 				Error("Unrecognised fetch method: %".format(method)).throw;
 			}
 		);
+	}
+
+	*checkSCVersion { |scversion|
+		^scversion ?? { "%.%".format(Main.scVersionMajor, Main.scVersionMinor); }
+	}
+
+	*checkQuarkVersion { |name, scversion, quarkversion|
+
+		quarkversion = quarkversion ?? {
+			this.getQuarksInfo[name]["version"]
+			.collect{ |x|
+				var compat = x["compat"];
+				compat.isNil or: {
+					(compat.asArray.size == 0) or: { compat.includesEqual(scversion) }
+				}
+			}
+			.select{ |x| x }
+			.keys.asArray.sort.last
+		};
+		if( quarkversion.isNil ) {
+			Error("There is no version of the quark % compatible with the current SuperCollider Version:  %".format(name, scversion) ).throw
+		};
+		^quarkversion
 	}
 
 }

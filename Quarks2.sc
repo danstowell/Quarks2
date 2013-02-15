@@ -127,6 +127,14 @@ Quarks2 {
 					) ).postln.runInTerminal;
 				}
 			},
+			\svn, {
+				var escapedPath = path.shellQuote;
+				if( firstTime) {
+					("svn checkout" + uri + escapedPath).postln.runInTerminal;
+				} {
+					("svn update" + escapedPath).postln.runInTerminal;
+				}
+			},
 			{
 				Error("Unrecognised fetch method: %".format(method)).throw;
 			}

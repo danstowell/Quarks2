@@ -96,6 +96,8 @@ Quarks2 {
 		// "fetchInfo" is extra information for retrieving that might not fit in the URI - for git sources, for example, it gives the TAG (if not present, assume it's the version#)
 		// If "path" already exists, this is an "update"-type operation. Otherwise it's a first-time.
 		var firstTime = File.exists(path).not;
+		var escapedPath = path.shellQuote;
+		var escapedUri  = uri.shellQuote;
 		method = (method ?? { uri.split($:).at(0) }).asSymbol;
 		method.switch(
 			\file, {
@@ -108,12 +110,10 @@ Quarks2 {
 				File.copy(uri, path);
 			},
 			\http, {
-				var cmd = "curl % -o %".format(uri.shellQuote, path.shellQuote); // dependency: curl
+				var cmd = "curl % -o %".format(escapedUri, escapedPath); // dependency: curl
 				cmd.systemCmd
 			},
 			\git, {
-				var escapedPath = path.shellQuote;
-				var escapedUri  = uri.shellQuote;
 				if( firstTime) {
 					("git clone "++escapedUri++" "++escapedPath
 						++ (fetchInfo !? { |tag|
@@ -129,8 +129,6 @@ Quarks2 {
 				}
 			},
 			\svn, {
-				var escapedPath = path.shellQuote;
-				var escapedUri  = uri.shellQuote;
 				if( firstTime) {
 					("svn checkout" + escapedUri + escapedPath).postln.runInTerminal;
 				} {

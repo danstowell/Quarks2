@@ -97,8 +97,21 @@ Quarks2 {
 
 	// Adds a local quark to LanguageConfig, ensuring not a duplicate entry
 	*install {|name, scversion, quarkversion|
-		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
+		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath, existing;
 		name = name.asString;
+		quarkversion = quarkversion.asFloat;
+
+		existing = this.installed[name];
+		if(existing.notNil and: {existing[\quarkversion] != quarkversion }){
+			if(existing[\quarkversion].isNil or: {quarkversion.isNil or: {existing[\quarkversion]<quarkversion}}){
+				"Quark '%': uninstalling version % in order to install version %"
+				.format(name,  existing[\quarkversion], quarkversion).postln;
+				this.uninstall(name, scversion, quarkversion);
+			}{
+				Error("Quark '%' version % cannot be installed: already installed with version %. Uninstall the other version if needed.".format(name, quarkversion, existing[\quarkversion])).throw;
+			};
+		};
+
 		folderpath = cupboardpath +/+ foldername;
 
 		if(File.exists(folderpath).not){
@@ -181,12 +194,11 @@ Quarks2 {
 	}
 
 	*installed {
-		var list = LanguageConfig.includePaths.select(_.beginsWith(Quarks2.cupboardpath))
-		.collect{|path|
+		^LanguageConfig.includePaths.select(_.beginsWith(Quarks2.cupboardpath))
+		.collectAs({ |path|
 			var bits = path.basename.findRegexp("^(.+)-(.+?)-(.+?)$");
-			(name: bits[1][1], scversion: bits[2][1].asFloat, quarkversion: bits[3][1].asFloat)
-		};
-		^list
+			Association(bits[1][1], (scversion: bits[2][1].asFloat, quarkversion: bits[3][1].asFloat))
+		}, Dictionary)
 	}
 
 	*fromQuarks1 {

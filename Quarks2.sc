@@ -54,27 +54,41 @@ Quarks2 {
 				}{
 					quarkinfo.grow; // Seems needed to ensure insertion of new key will succeed (!!)
 					quarkinfo["source"] = sourcename;
-					quarks[quarkname] = quarkinfo;
+					quarks[quarkname] = this.standardiseDictionaryKeys(quarkinfo);
 				};
 			};
 		};
 		^quarks
 	}
 
+	*standardiseDictionaryKeys{ |dict, floatKey=false|
+		// for quark purposes, we need to recursively coerce all keys to be str
+		//   - except if key is version, subkeys are float
+		var result = Dictionary.new(dict.size);
+		dict.keysValuesDo{|k,v|
+			k = if(floatKey){k.asFloat}{k.asString};
+			if(result[k].notNil){ Error("Duplicate key '%' encountered".format(k)).throw };
+			if(v.isKindOf(Dictionary)){ v = this.standardiseDictionaryKeys(v, k=="version") };
+			result[k]=v;
+		};
+		^result
+	}
+
 	// Downloads a quark from source-->cupboard
 	*fetchQuark { |name, scversion, quarkversion, quarklist|
 		var quarkmeta, foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath, quarkversioninfo;
+		name = name.asString;
 		folderpath = cupboardpath +/+ foldername;
 
 		// Ask the quark what its [method, uri, fetchInfo] are, then pass them to the *fetch
-		quarkmeta = (quarklist ?? {this.getQuarksInfo})[name.asString];
+		quarkmeta = (quarklist ?? {this.getQuarksInfo})[name];
 		if(quarkmeta.isNil){ Error("Quark '%' not found in metadata".format(name)).throw };
 
 		try{
-			quarkversioninfo = quarkmeta["version"][quarkversion.asString];
+			quarkversioninfo = quarkmeta["version"][quarkversion];
 			if(quarkversioninfo.isNil){Error().throw};
 		}{
-			Error("Version '%' not listed in metadata for Quark '%'".format(quarkversion.asString, name)).throw;
+			Error("Version '%' not listed in metadata for Quark '%'".format(quarkversion, name)).throw;
 		};
 
 		"this.fetch(%, %, %, %)".format(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkversioninfo["fetchInfo"]).postln;
@@ -84,6 +98,7 @@ Quarks2 {
 	// Adds a local quark to LanguageConfig, ensuring not a duplicate entry
 	*install {|name, scversion, quarkversion|
 		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
+		name = name.asString;
 		folderpath = cupboardpath +/+ foldername;
 
 		if(File.exists(folderpath).not){
@@ -107,6 +122,7 @@ Quarks2 {
 	}
 
 	*quarkFolderName {|name, scversion, quarkversion|
+		name = name.asString;
 		^"%-%-%".format(name, scversion, quarkversion);
 		// TODO LATER:
 		//   - if scversion unset, use current major version

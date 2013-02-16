@@ -179,5 +179,15 @@ Quarks2 {
 			}
 		);
 	}
-}
 
+	*fromQuarks1 {
+		// For each old-style quark that is installed, install it the new way
+		Quarks.installed.do{|q|
+			"Converting quark '%'".format(q.name).postln;
+			this.install(q.name, Main.version, q.version);
+			// deactivate oldquarks install (to prevent classnameclashogeddon)
+			LanguageConfig.removeIncludePath(Platform.userExtensionDir +/+ Quarks.local.name +/+ q.path);
+			LanguageConfig.store;
+		};
+	}
+}

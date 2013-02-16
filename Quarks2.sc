@@ -27,7 +27,7 @@ Quarks2 {
 		if(File.exists(cupboardpath           ).not){ File.mkdir(cupboardpath           ) };
 		// For each "sourceslist" item, fetch the file somewhere temporary and parse its data into a dictionary of sources (label -> URI)
 		sourceslist.do{ |uri|
-			if(uri[0] != $#){
+			if(uri.size!=0 and: {uri[0] != $#}){
 				tmppath = PathName.tmp +/+ "a_sourceslist.yaml";
 				File.delete(tmppath);
 				this.fetch(uri, tmppath, singlefile: true);
@@ -81,22 +81,21 @@ Quarks2 {
 
 	// Downloads a quark from source-->cupboard
 	*fetchQuark { |name, scversion, quarkversion, quarklist|
-		var quarkmeta, foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath, quarkversioninfo;
+		var quarkmeta, foldername, folderpath, quarkversioninfo, fetchinfo;
+		quarklist = quarklist ?? {this.getQuarksInfo};
 		name = name.asString;
+		foldername=this.quarkFolderName(name, scversion, quarkversion);
 		folderpath = cupboardpath +/+ foldername;
 
 		// Ask the quark what its [method, uri, fetchInfo] are, then pass them to the *fetch
-		quarkmeta = (quarklist ?? {this.getQuarksInfo})[name];
+		quarkmeta = quarklist[name];
 		if(quarkmeta.isNil){ Error("Quark '%' not found in metadata".format(name)).throw };
 
-		try{
-			quarkversioninfo = quarkmeta["version"][quarkversion];
-			if(quarkversioninfo.isNil){Error().throw};
-		}{
-			Error("Version '%' not listed in metadata for Quark '%'".format(quarkversion, name)).throw;
+		quarkversioninfo = this.pr_chooseBestVersion(name, scversion, quarkversion, quarklist);
+		if(quarkversioninfo.notNil and: {quarkversioninfo["fetchInfo"].notNil}){
+			fetchinfo = quarkversioninfo["fetchInfo"];
 		};
 
-		"this.fetch(%, %, %, %)".format(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkversioninfo["fetchInfo"]).postln;
 		this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkversioninfo["fetchInfo"])
 	}
 
@@ -104,7 +103,7 @@ Quarks2 {
 	*install {|name, scversion, quarkversion|
 		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath, existing;
 		name = name.asString;
-		quarkversion = quarkversion.asFloat;
+		if(quarkversion.notNil){quarkversion = quarkversion.asFloat};
 
 		existing = this.installed[name];
 		if(existing.notNil and: {existing[\quarkversion] != quarkversion }){
@@ -131,6 +130,7 @@ Quarks2 {
 		LanguageConfig.store;
 		"Quark '%' installed to LanguageConfig".format(name).postln;
 	}
+
 	*uninstall {|name, scversion, quarkversion|
 		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
 		folderpath = cupboardpath +/+ foldername;
@@ -141,10 +141,11 @@ Quarks2 {
 
 	*quarkFolderName {|name, scversion, quarkversion|
 		name = name.asString;
-		^"%-%-%".format(name, scversion, quarkversion);
+		scversion = this.pr_scversionString(scversion);
+		quarkversion = (quarkversion ? 0).asFloat;
+		// Note: quarkversion is a float for fixed version number, or nil/0 it means "always want the latest compatible"
+		^"%-%-%".format(name, scversion, if(quarkversion>0){quarkversion}{"latest"});
 		// TODO LATER:
-		//   - if scversion unset, use current major version
-		//   - if quarkversion unset, use latest compatible
 		//   - also somehow allow for unversioned paths (for installing by bare URL with no metadata)
 	}
 
@@ -205,6 +206,41 @@ Quarks2 {
 			var bits = path.basename.findRegexp("^(.+)-(.+?)-(.+?)$");
 			Association(bits[1][1], (scversion: bits[2][1].asFloat, quarkversion: bits[3][1].asFloat))
 		}, Dictionary)
+	}
+
+	*pr_scversionString{ |scversion|
+		^(scversion ?? { "%.%".format(Main.scVersionMajor, Main.scVersionMinor) }).asString
+	}
+
+	*pr_chooseBestVersion{ | name, scversion, quarkversion, quarklist |
+		// Decide which version should be fetched/installed. Returns a version struct, or nil for unversioned, or error for incompatible.
+		// This decision shouldn't affect the foldername btw, since it never returns "latest", always a specific version.
+		var candidates, winner;
+		scversion = this.pr_scversionString(scversion);
+		if(quarklist[name]["version"].isNil){
+			if(quarkversion.isNil){
+				^nil // if quark entry knows no version, then nil is OK
+			}{
+				Error("Quark % has no version information, but version % requested".format(name, quarkversion)).throw
+			};
+		}{
+			if(quarkversion.notNil and: {quarklist[name]["version"][quarkversion].isNil}){
+				Error("Version '%' not listed in metadata for Quark '%'".format(quarkversion, name)).throw;
+			}
+		};
+		// get a filtered list of the versions compat with this version
+		candidates = quarklist[name]["version"].select{|ver| ver["compat"].isNil
+			or: {ver["compat"].includesEqual(scversion)}};
+		if(candidates.size==0){ Error("Found no compatible version of quark % with %".format(name, scversion)).throw };
+		if(quarkversion.notNil){ // locate in filtered list, error if not
+			winner = candidates[quarkversion];
+			if(winner.isNil){ Error("Quark % version % not marked as being compatible with %".format(name, quarkversion, scversion)).throw };
+			winner["version"] = quarkversion;
+		}{ // if quarkversion is nil, find latest compatible version, return that
+			winner = candidates[candidates.keys.asArray.sort.last];
+			winner["version"] = candidates.keys.asArray.sort.last;
+		}
+		^winner
 	}
 
 	*fromQuarks1 {

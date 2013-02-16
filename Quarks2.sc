@@ -1,3 +1,7 @@
+/*
+* Quarks redesign, based on plan discussed at sc2012.
+* NOTE: NO gui code in here please (separate file, core having no gui dependence).
+*/
 Quarks2 {
 	classvar cachepath, sourceslistpath, sourceslist, cupboardpath;
 
@@ -24,7 +28,11 @@ Quarks2 {
 			tmppath.parseYAMLFile().keysValuesDo{ |sourcelbl, sourceuri|
 				landingpath = cachepath +/+ "sources" +/+ sourcelbl ++ ".yaml";
 				"rm -rf %".format(landingpath.quote).systemCmd;
-				this.fetch(sourceuri, landingpath, singlefile: true);
+				try{
+					this.fetch(sourceuri, landingpath, singlefile: true);
+				}{
+					"WARNING: Quarks2 unable to fetch metadata from '%' - some quarks may be unavailable".format(sourceuri).postln;
+				};
 				// todo: be more careftul for sourcelbl name-clashes and YAML parse failures
 			};
 		};
@@ -55,16 +63,22 @@ Quarks2 {
 
 	// Downloads a quark from source-->cupboard
 	*fetchQuark { |name, scversion, quarkversion, quarklist|
-		var quarkmeta, foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
+		var quarkmeta, foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath, quarkversioninfo;
 		folderpath = cupboardpath +/+ foldername;
 
 		// Ask the quark what its [method, uri, fetchInfo] are, then pass them to the *fetch
 		quarkmeta = (quarklist ?? {this.getQuarksInfo})[name.asString];
 		if(quarkmeta.isNil){ Error("Quark '%' not found in metadata".format(name)).throw };
 
-		//this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion]["fetchInfo"])
-		"this.fetch(%, %, %, %)".format(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion.asString]["fetchInfo"]).postln;
-		this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkmeta["version"][quarkversion.asString]["fetchInfo"])
+		try{
+			quarkversioninfo = quarkmeta["version"][quarkversion.asString];
+			if(quarkversioninfo.isNil){Error().throw};
+		}{
+			Error("Version '%' not listed in metadata for Quark '%'".format(quarkversion.asString, name)).throw;
+		};
+
+		"this.fetch(%, %, %, %)".format(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkversioninfo["fetchInfo"]).postln;
+		this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkversioninfo["fetchInfo"])
 	}
 
 	// Adds a local quark to LanguageConfig, ensuring not a duplicate entry
@@ -72,8 +86,17 @@ Quarks2 {
 		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
 		folderpath = cupboardpath +/+ foldername;
 
+		if(File.exists(folderpath).not){
+			this.fetchQuark(name, scversion, quarkversion)
+		};
+
+		if(File.exists(folderpath).not){
+			Error("Unable to install quark: fetch already attempted, thus expecting a folder at '%'".format(folderpath)).throw;
+		};
+
 		LanguageConfig.addIncludePath( folderpath );
 		LanguageConfig.store;
+		"Quark '%' installed to LanguageConfig".format(name).postln;
 	}
 	*uninstall {|name, scversion, quarkversion|
 		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
@@ -140,6 +163,5 @@ Quarks2 {
 			}
 		);
 	}
-
 }
 

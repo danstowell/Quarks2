@@ -3,7 +3,7 @@
 * NOTE: NO gui code in here please (separate file, core having no gui dependence).
 */
 Quarks2 {
-	classvar cachepath, sourceslistpath, sourceslist, cupboardpath;
+	classvar <cachepath, <sourceslistpath, <sourceslist, <cupboardpath;
 
 	*initClass {
 		StartUp.add{
@@ -178,6 +178,15 @@ Quarks2 {
 				Error("Unrecognised fetch method: %".format(method)).throw;
 			}
 		);
+	}
+
+	*installed {
+		var list = LanguageConfig.includePaths.select(_.beginsWith(Quarks2.cupboardpath))
+		.collect{|path|
+			var bits = path.basename.findRegexp("^(.+)-(.+?)-(.+?)$");
+			(name: bits[1][1], scversion: bits[2][1].asFloat, quarkversion: bits[3][1].asFloat)
+		};
+		^list
 	}
 
 	*fromQuarks1 {

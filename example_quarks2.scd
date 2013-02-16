@@ -8,6 +8,8 @@ Quarks2.install("cruciallib", Main.version, 1.0);  // Install a specific quark v
 
 Quarks2.install("cruciallib");    // short ver not yet working (need to be clever with defaults)
 
+Quarks2.installed;   // get a list of what's installed
+
 Quarks2.uninstall("cruciallib");
 
 

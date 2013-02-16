@@ -10,11 +10,14 @@ Quarks2 {
 			sourceslistpath = Platform.userAppSupportDir +/+ "quarks_sources.txt";
 			cachepath       = Platform.userAppSupportDir +/+ "quarks_infocache";
 			cupboardpath    = Platform.userAppSupportDir +/+ "quarks_cupboard";
-			/* TEMPORARY: HARDCODED LIST RATHER THAN READING FROM THE .txt WHICH SHOULD BE AT sourceslistpath */
-			sourceslist = [
-				/* TEMPORARY: the official recommendations should be held remotely (http: not file:) */
-				"file:///%/Quarks2/recommendedsources.yaml".format(Platform.userExtensionDir)
-			];
+			if(File.exists(sourceslistpath).not){
+				var fp;
+				// Create default sourceslist
+				fp = File.open(sourceslistpath, "w");
+				fp.write("# sources list - one URL per line. Lines beginning with # are ignored.\nhttps://raw.github.com/supercollider/quarks2seed/master/default_quarks_sources.yaml");
+				fp.close();
+			};
+			sourceslist = File.open(sourceslistpath, "r").readAllString.split(Char.nl);
 		}
 	}
 
@@ -22,18 +25,20 @@ Quarks2 {
 		var tmppath, sources = Dictionary[], landingpath;
 		// For each "sourceslist" item, fetch the file somewhere temporary and parse its data into a dictionary of sources (label -> URI)
 		sourceslist.do{ |uri|
-			tmppath = PathName.tmp +/+ "a_sourceslist.yaml";
-			File.delete(tmppath);
-			this.fetch(uri, tmppath, singlefile: true);
-			tmppath.parseYAMLFile().keysValuesDo{ |sourcelbl, sourceuri|
-				landingpath = cachepath +/+ "sources" +/+ sourcelbl ++ ".yaml";
-				"rm -rf %".format(landingpath.quote).systemCmd;
-				try{
-					this.fetch(sourceuri, landingpath, singlefile: true);
-				}{
-					"WARNING: Quarks2 unable to fetch metadata from '%' - some quarks may be unavailable".format(sourceuri).postln;
+			if(uri[0] != $#){
+				tmppath = PathName.tmp +/+ "a_sourceslist.yaml";
+				File.delete(tmppath);
+				this.fetch(uri, tmppath, singlefile: true);
+				tmppath.parseYAMLFile().keysValuesDo{ |sourcelbl, sourceuri|
+					landingpath = cachepath +/+ "sources" +/+ sourcelbl ++ ".yaml";
+					"rm -rf %".format(landingpath.quote).systemCmd;
+					try{
+						this.fetch(sourceuri, landingpath, singlefile: true);
+					}{
+						"WARNING: Quarks2 unable to fetch metadata from '%' - some quarks may be unavailable".format(sourceuri).postln;
+					};
+					// todo: be more careftul for sourcelbl name-clashes and YAML parse failures
 				};
-				// todo: be more careftul for sourcelbl name-clashes and YAML parse failures
 			};
 		};
 		File.delete(tmppath);
@@ -47,8 +52,6 @@ Quarks2 {
 			sourcename = sourcecachepath.basename.splitext[0].asSymbol;
 			parsed = sourcecachepath.parseYAMLFile();
 			parsed.keysValuesDo{ |quarkname, quarkinfo|
-				"quarkINFO".postln;
-				quarkinfo.postln;
 				if(quarks[quarkname].notNil){
 					"getQuarksInfo skipping '%' from source '%' because of nameclash with another quark".format(quarkname, sourcename).warn;
 				}{
@@ -151,6 +154,7 @@ Quarks2 {
 		var escapedPath = path.shellQuote;
 		var escapedUri  = uri.shellQuote;
 		method = (method ?? { uri.split($:).at(0) }).asSymbol;
+		if(method==\https){method=\http};
 		method.switch(
 			\file, {
 				if(uri[..6] == "file://"){ uri = uri[7..]};

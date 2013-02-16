@@ -23,6 +23,8 @@ Quarks2 {
 
 	*refresh {
 		var tmppath, sources = Dictionary[], landingpath;
+		if(File.exists(cachepath +/+ "sources").not){ File.mkdir(cachepath +/+ "sources") };
+		if(File.exists(cupboardpath           ).not){ File.mkdir(cupboardpath           ) };
 		// For each "sourceslist" item, fetch the file somewhere temporary and parse its data into a dictionary of sources (label -> URI)
 		sourceslist.do{ |uri|
 			if(uri[0] != $#){
@@ -42,7 +44,7 @@ Quarks2 {
 			};
 		};
 		File.delete(tmppath);
-
+		"Quarks2 refreshed from % sourceslists".format(sourceslist.size).postln;
 	}
 
 	*getQuarksInfo {

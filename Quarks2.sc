@@ -132,11 +132,20 @@ Quarks2 {
 	}
 
 	*uninstall {|name, scversion, quarkversion|
-		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath;
+		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath, installed;
 		folderpath = cupboardpath +/+ foldername;
 
-		LanguageConfig.removeIncludePath( folderpath );
-		LanguageConfig.store;
+		if(LanguageConfig.includePaths.includesEqual(folderpath)){
+			LanguageConfig.removeIncludePath( folderpath );
+			LanguageConfig.store;
+		}{
+			installed = this.installed[name];
+			if(installed.isNil){
+				"Warning: Quarks2.uninstall - % is not installed, so cannot uninstall".format(name).postln;
+			}{
+				"Warning: Quarks2.uninstall - % version % is installed, but uninstall version % requested. Not uninstalling.".format(name, installed["quarkversion"], quarkversion).postln;
+			};
+		};
 	}
 
 	*quarkFolderName {|name, scversion, quarkversion|

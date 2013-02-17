@@ -105,6 +105,11 @@ Quarks2 {
 			};
 		};
 
+		this.getQuarksInfo[name]["dependencies"].asArray.do{|dep|
+			"Following dependency % -> %".format(name, dep).postln;
+			this.install(dep["name"], dep["version"], scversion);  // todo: how to specify version dependencies such as "<= 1.2"
+		};
+
 		folderpath = cupboardpath +/+ foldername;
 
 		if(File.exists(folderpath).not){

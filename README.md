@@ -34,3 +34,19 @@ For a quark, the "version" entry should be a sub-dictionary with fixed version n
 
 In many cases you do NOT need to add fetchInfo at the root - for example, by default the \git method simply fetches the "master" branch, which in most cases is fine. "compat" is a list of SC "major.minor" versions that this quark version is compatible with (if missing, compatible with all). Similarly, the key "platform" can be a list of specific platform compatibilities (eg ["mac", "windows", "linux"]).
 
+
+Dependencies
+------------
+
+If a quark depends on other quarks, here's how to specify it:
+
+	{
+	crazylib: {
+		dependencies: [
+			{ name: "bonkerslib" },
+			{ name: "yabalab", version: 0.4 }
+			]
+		}
+	}
+
+

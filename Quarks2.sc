@@ -213,7 +213,9 @@ Quarks2 {
 		^LanguageConfig.includePaths.select(_.beginsWith(Quarks2.cupboardpath))
 		.collectAs({ |path|
 			var bits = path.basename.findRegexp("^(.+)-(.+?)-(.+?)$");
-			Association(bits[1][1], (scversion: bits[2][1].asFloat, quarkversion: bits[3][1].asFloat))
+			var quarkversion = bits[3][1];
+			quarkversion = if(quarkversion=="latest"){nil}{quarkversion.asFloat};
+			Association(bits[1][1], (scversion: bits[2][1].asFloat, quarkversion: quarkversion))
 		}, Dictionary)
 	}
 

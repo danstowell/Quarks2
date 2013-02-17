@@ -235,7 +235,14 @@ Quarks2 {
 		scversion = this.pr_scversionString(scversion);
 		if(quarklist[name]["version"].isNil){
 			if(quarkversion.isNil){
-				^nil // if quark entry knows no version, then nil is OK
+				// if quark entry knows no version, then requesting nil (==latest) is OK. check compat and return nil.
+				if(quarklist[name]["compat"].notNil and:{quarklist[name]["compat"].includesEqual(scversion).not}){
+					Error("Quark % not marked as compatible with SC version %".format(name, scversion)).throw
+				};
+				if(quarklist[name]["platform"].notNil and:{quarklist[name]["platform"].includesEqual(thisProcess.platform.asString).not}){
+					Error("Quark % not marked as compatible with platform %".format(name, thisProcess.platform)).throw
+				};
+				^nil
 			}{
 				Error("Quark % has no version information, but version % requested".format(name, quarkversion)).throw
 			};
@@ -245,12 +252,17 @@ Quarks2 {
 			}
 		};
 		// get a filtered list of the versions compat with this version
-		candidates = quarklist[name]["version"].select{|ver| ver["compat"].isNil
-			or: {ver["compat"].includesEqual(scversion)}};
-		if(candidates.size==0){ Error("Found no compatible version of quark % with %".format(name, scversion)).throw };
+		candidates = quarklist[name]["version"].select{|ver|
+			(ver["compat"  ].isNil or: {ver["compat"  ].includesEqual(scversion)})
+			and:
+			{ver["platform"].isNil or: {ver["platform"].includesEqual(thisProcess.platform.asString)}}
+		};
+		if(candidates.size==0){ Error("Found no compatible version of quark % with % on %"
+			.format(name, scversion, thisProcess.platform)).throw };
 		if(quarkversion.notNil){ // locate in filtered list, error if not
 			winner = candidates[quarkversion];
-			if(winner.isNil){ Error("Quark % version % not marked as being compatible with %".format(name, quarkversion, scversion)).throw };
+			if(winner.isNil){ Error("Quark % version % not marked as being compatible with % on %"
+				.format(name, quarkversion, scversion, thisProcess.platform)).throw };
 			winner["version"] = quarkversion;
 		}{ // if quarkversion is nil, find latest compatible version, return that
 			winner = candidates[candidates.keys.asArray.sort.last];

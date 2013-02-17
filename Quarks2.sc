@@ -59,24 +59,11 @@ Quarks2 {
 				}{
 					quarkinfo.grow; // Seems needed to ensure insertion of new key will succeed (!!)
 					quarkinfo["source"] = sourcename;
-					quarks[quarkname] = this.standardiseDictionaryKeys(quarkinfo);
+					quarks[quarkname] = this.pr_standardiseDictionaryKeys(quarkinfo);
 				};
 			};
 		};
 		^quarks
-	}
-
-	*standardiseDictionaryKeys{ |dict, floatKey=false|
-		// for quark purposes, we need to recursively coerce all keys to be str
-		//   - except if key is version, subkeys are float
-		var result = Dictionary.new(dict.size);
-		dict.keysValuesDo{|k,v|
-			k = if(floatKey){k.asFloat}{k.asString};
-			if(result[k].notNil){ Error("Duplicate key '%' encountered".format(k)).throw };
-			if(v.isKindOf(Dictionary)){ v = this.standardiseDictionaryKeys(v, k=="version") };
-			result[k]=v;
-		};
-		^result
 	}
 
 	// Downloads a quark from source-->cupboard
@@ -148,6 +135,19 @@ Quarks2 {
 		};
 	}
 
+	*installed {
+		^LanguageConfig.includePaths.select(_.beginsWith(Quarks2.cupboardpath))
+		.collectAs({ |path|
+			var bits = path.basename.findRegexp("^(.+)-(.+?)-(.+?)$");
+			var quarkversion = bits[3][1];
+			quarkversion = if(quarkversion=="latest"){nil}{quarkversion.asFloat};
+			Association(bits[1][1], (scversion: bits[2][1].asFloat, quarkversion: quarkversion))
+		}, Dictionary)
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	// main methods above, "accessory" methods below
+
 	*quarkFolderName {|name, scversion, quarkversion|
 		name = name.asString;
 		scversion = this.pr_scversionString(scversion);
@@ -209,14 +209,17 @@ Quarks2 {
 		);
 	}
 
-	*installed {
-		^LanguageConfig.includePaths.select(_.beginsWith(Quarks2.cupboardpath))
-		.collectAs({ |path|
-			var bits = path.basename.findRegexp("^(.+)-(.+?)-(.+?)$");
-			var quarkversion = bits[3][1];
-			quarkversion = if(quarkversion=="latest"){nil}{quarkversion.asFloat};
-			Association(bits[1][1], (scversion: bits[2][1].asFloat, quarkversion: quarkversion))
-		}, Dictionary)
+	*pr_standardiseDictionaryKeys{ |dict, floatKey=false|
+		// for quark purposes, we need to recursively coerce all keys to be str
+		//   - except if key is version, subkeys are float
+		var result = Dictionary.new(dict.size);
+		dict.keysValuesDo{|k,v|
+			k = if(floatKey){k.asFloat}{k.asString};
+			if(result[k].notNil){ Error("Duplicate key '%' encountered".format(k)).throw };
+			if(v.isKindOf(Dictionary)){ v = this.pr_standardiseDictionaryKeys(v, k=="version") };
+			result[k]=v;
+		};
+		^result
 	}
 
 	*pr_scversionString{ |scversion|

@@ -69,7 +69,7 @@ Quarks2 {
 
 	// Downloads a quark from source-->cupboard
 	*fetchQuark { |name, scversion, quarkversion, quarklist|
-		var quarkmeta, foldername, folderpath, quarkversioninfo, fetchinfo;
+		var quarkmeta, foldername, folderpath, quarkversioninfo, fetchInfo;
 		quarklist = quarklist ?? {this.getQuarksInfo};
 		name = name.asString;
 		foldername=this.quarkFolderName(name, scversion, quarkversion);
@@ -80,11 +80,12 @@ Quarks2 {
 		if(quarkmeta.isNil){ Error("Quark '%' not found in metadata".format(name)).throw };
 
 		quarkversioninfo = this.pr_chooseBestVersion(name, scversion, quarkversion, quarklist);
+		fetchInfo = quarklist[name]["fetchInfo"];
 		if(quarkversioninfo.notNil and: {quarkversioninfo["fetchInfo"].notNil}){
-			fetchinfo = quarkversioninfo["fetchInfo"];
+			fetchInfo = quarkversioninfo["fetchInfo"];
 		};
 
-		this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], quarkversioninfo["fetchInfo"])
+		this.fetch(quarkmeta["uri"], folderpath, quarkmeta["method"], fetchInfo)
 	}
 
 	// Adds a local quark to LanguageConfig, ensuring not a duplicate entry

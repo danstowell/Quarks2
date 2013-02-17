@@ -22,7 +22,7 @@ Quarks2 {
 	}
 
 	*refresh {
-		var tmppath, sources = Dictionary[], landingpath;
+		var tmppath, sources = Dictionary[], landingpath, listcount=0;
 		if(File.exists(cachepath +/+ "sources").not){ File.mkdir(cachepath +/+ "sources") };
 		if(File.exists(cupboardpath           ).not){ File.mkdir(cupboardpath           ) };
 		// For each "sourceslist" item, fetch the file somewhere temporary and parse its data into a dictionary of sources (label -> URI)
@@ -36,6 +36,7 @@ Quarks2 {
 					"rm -rf %".format(landingpath.quote).systemCmd;
 					try{
 						this.fetch(sourceuri, landingpath, singlefile: true);
+						listcount = listcount + 1;
 					}{
 						"WARNING: Quarks2 unable to fetch metadata from '%' - some quarks may be unavailable".format(sourceuri).postln;
 					};
@@ -44,7 +45,7 @@ Quarks2 {
 			};
 		};
 		File.delete(tmppath);
-		"Quarks2 refreshed from % sourceslists".format(sourceslist.size).postln;
+		"Quarks2 refreshed from % sourceslists".format(listcount).postln;
 	}
 
 	*getQuarksInfo {

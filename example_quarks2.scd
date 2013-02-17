@@ -4,7 +4,7 @@ Quarks2.refresh
 // This lists the available ones
 Quarks2.getQuarksInfo.keys
 
-Quarks2.install("cruciallib", Main.version, 1.0);  // Install a specific quark version
+Quarks2.install("cruciallib", 1.0);  // Install a specific quark version
 
 Quarks2.install("cruciallib");    // short ver not yet working (need to be clever with defaults)
 

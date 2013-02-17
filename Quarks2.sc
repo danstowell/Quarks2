@@ -68,18 +68,18 @@ Quarks2 {
 	}
 
 	// Downloads a quark from source-->cupboard
-	*fetchQuark { |name, scversion, quarkversion, quarklist|
+	*fetchQuark { |name, quarkversion, scversion, quarklist|
 		var quarkmeta, foldername, folderpath, quarkversioninfo, fetchInfo;
 		quarklist = quarklist ?? {this.getQuarksInfo};
 		name = name.asString;
-		foldername=this.quarkFolderName(name, scversion, quarkversion);
+		foldername=this.quarkFolderName(name, quarkversion, scversion);
 		folderpath = cupboardpath +/+ foldername;
 
 		// Ask the quark what its [method, uri, fetchInfo] are, then pass them to the *fetch
 		quarkmeta = quarklist[name];
 		if(quarkmeta.isNil){ Error("Quark '%' not found in metadata".format(name)).throw };
 
-		quarkversioninfo = this.pr_chooseBestVersion(name, scversion, quarkversion, quarklist);
+		quarkversioninfo = this.pr_chooseBestVersion(name, quarkversion, scversion, quarklist);
 		fetchInfo = quarklist[name]["fetchInfo"];
 		if(quarkversioninfo.notNil and: {quarkversioninfo["fetchInfo"].notNil}){
 			fetchInfo = quarkversioninfo["fetchInfo"];
@@ -89,8 +89,8 @@ Quarks2 {
 	}
 
 	// Adds a local quark to LanguageConfig, ensuring not a duplicate entry
-	*install {|name, scversion, quarkversion|
-		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath, existing;
+	*install {|name, quarkversion, scversion|
+		var foldername=this.quarkFolderName(name, quarkversion, scversion), folderpath, existing;
 		name = name.asString;
 		if(quarkversion.notNil){quarkversion = quarkversion.asFloat};
 
@@ -99,7 +99,7 @@ Quarks2 {
 			if(existing[\quarkversion].isNil or: {quarkversion.isNil or: {existing[\quarkversion]<quarkversion}}){
 				"Quark '%': uninstalling version % in order to install version %"
 				.format(name,  existing[\quarkversion], quarkversion).postln;
-				this.uninstall(name, scversion, quarkversion);
+				this.uninstall(name, quarkversion, scversion);
 			}{
 				Error("Quark '%' version % cannot be installed: already installed with version %. Uninstall the other version if needed.".format(name, quarkversion, existing[\quarkversion])).throw;
 			};
@@ -108,7 +108,7 @@ Quarks2 {
 		folderpath = cupboardpath +/+ foldername;
 
 		if(File.exists(folderpath).not){
-			this.fetchQuark(name, scversion, quarkversion)
+			this.fetchQuark(name, quarkversion, scversion)
 		};
 
 		if(File.exists(folderpath).not){
@@ -120,8 +120,8 @@ Quarks2 {
 		"Quark '%' installed to LanguageConfig".format(name).postln;
 	}
 
-	*uninstall {|name, scversion, quarkversion|
-		var foldername=this.quarkFolderName(name, scversion, quarkversion), folderpath, installed;
+	*uninstall {|name, quarkversion, scversion|
+		var foldername=this.quarkFolderName(name, quarkversion, scversion), folderpath, installed;
 		folderpath = cupboardpath +/+ foldername;
 
 		if(LanguageConfig.includePaths.includesEqual(folderpath)){
@@ -150,7 +150,7 @@ Quarks2 {
 	/////////////////////////////////////////////////////////////////////
 	// main methods above, "accessory" methods below
 
-	*quarkFolderName {|name, scversion, quarkversion|
+	*quarkFolderName {|name, quarkversion, scversion|
 		name = name.asString;
 		scversion = this.pr_scversionString(scversion);
 		quarkversion = (quarkversion ? 0).asFloat;
@@ -228,7 +228,7 @@ Quarks2 {
 		^(scversion ?? { "%.%".format(Main.scVersionMajor, Main.scVersionMinor) }).asString
 	}
 
-	*pr_chooseBestVersion{ | name, scversion, quarkversion, quarklist |
+	*pr_chooseBestVersion{ | name, quarkversion, scversion, quarklist |
 		// Decide which version should be fetched/installed. Returns a version struct, or nil for unversioned, or error for incompatible.
 		// This decision shouldn't affect the foldername btw, since it never returns "latest", always a specific version.
 		var candidates, winner;

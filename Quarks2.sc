@@ -194,20 +194,20 @@ Quarks2 {
 						++ (fetchInfo !? { |tag|
 							(" && cd "++escapedPath++" && git checkout "++tag)
 							} ?? ""
-					) ).postln.runInTerminal;
+					) ).postln.systemCmd;
 				} {
 					("cd" + escapedPath + "&& git fetch"
 						++ (fetchInfo !? { |tag|
 							(" && git checkout "++tag)
 							} ?? ""
-					) ).postln.runInTerminal;
+					) ).postln.systemCmd;
 				}
 			},
 			\svn, {
 				if( firstTime) {
-					("svn checkout" + escapedUri + escapedPath).postln.runInTerminal;
+					("svn checkout" + escapedUri + escapedPath).postln.systemCmd;
 				} {
-					("svn update" + escapedPath).postln.runInTerminal;
+					("svn update" + escapedPath).postln.systemCmd;
 				}
 			},
 			{

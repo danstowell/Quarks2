@@ -1,6 +1,6 @@
 // Foreach oldquark, output a YAML -- NOTE THAT LOTS OF TIDYING IS NEEDED AFTER!
 (
-Quarks.local.quarks.do{|q|
+Quarks.repos.quarks.do{|q|
 	var qi = q.info.deepCopy;
 	qi[\method]='svn';
 	qi['uri'] = Quarks.repos.url +/+ q.info[\path];
@@ -16,4 +16,3 @@ Quarks.local.quarks.do{|q|
 	"%: %,\n".format(q.name, JSON.stringify(qi)).postln;
 }; "";
 )
-

@@ -2,7 +2,7 @@
 cruciallib: {
         method: git,
         uri: "git://github.com/crucial/cruciallib.git",
-        version: {
+        versions: {
                 0.1: {
                         compat: [3.5, 3.6, 3.7],
                         fetchInfo: {tag: "V01.yeah"}

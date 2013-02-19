@@ -19,5 +19,5 @@ Quarks2.uninstall("cruciallib");
 a = Quarks2.getQuarksInfo
 a.keys
 a["cruciallib"].keysValuesDo{|k,v| "ENTRY ".post; k.postln; v.postln;}
-a["cruciallib"]["version"]
+a["cruciallib"]["versions"]
 

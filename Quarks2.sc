@@ -218,12 +218,12 @@ Quarks2 {
 
 	*pr_standardiseDictionaryKeys{ |dict, floatKey=false|
 		// for quark purposes, we need to recursively coerce all keys to be str
-		//   - except if key is version, subkeys are float
+		//   - except if key is "versions", subkeys are float
 		var result = Dictionary.new(dict.size);
 		dict.keysValuesDo{|k,v|
 			k = if(floatKey){k.asFloat}{k.asString};
 			if(result[k].notNil){ Error("Duplicate key '%' encountered".format(k)).throw };
-			if(v.isKindOf(Dictionary)){ v = this.pr_standardiseDictionaryKeys(v, k=="version") };
+			if(v.isKindOf(Dictionary)){ v = this.pr_standardiseDictionaryKeys(v, k=="versions") };
 			result[k]=v;
 		};
 		^result
@@ -247,10 +247,10 @@ Quarks2 {
 			};
 		}{ // user requested a specific version - check compatibility, return if it works, error if not
 			var chosenversion;
-			if(quarklist[name]["version"].isNil){
+			if(quarklist[name]["versions"].isNil){
 				Error("Quark % has no version information, but version % requested".format(name, quarkversion)).throw
 			};
-			chosenversion = quarklist[name]["version"][quarkversion];
+			chosenversion = quarklist[name]["versions"][quarkversion];
 			if(chosenversion.isNil){
 				Error("Version '%' not listed in metadata for Quark '%'".format(quarkversion, name)).throw;
 			};
@@ -265,7 +265,7 @@ Quarks2 {
 
 		// From here on, we know we want to return a version (not nil), though the user's request was generic.
 		// So we need to try and find a good one.
-		candidates = quarklist[name]["version"].select{|ver|
+		candidates = quarklist[name]["versions"].select{|ver|
 			(ver["compat"  ].isNil or: {ver["compat"  ].includesEqual(scversion)})
 			and:
 			{ver["platform"].isNil or: {ver["platform"].includesEqual(thisProcess.platform.asString)}}

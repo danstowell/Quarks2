@@ -15,16 +15,16 @@ A user can ask to install/fetch either:
 * a specific numbered version of a quark - that version is installed. In future it may be updated, but if a new version becomes available it won't be upgraded.
 * no specific version - the latest suitable version is installed, and in future it can upgrade to newer versions.
 
-On disk, the "cupboard" folder contains folders with quarkversion number at the end, or "-latest" for the "upgradeable" version. Once the YAML metadata is loaded into the language, if "version" key is nil then this refers to the upgradeable version.
+On disk, the "cupboard" folder contains folders with quarkversion number at the end, or "-latest" for the "upgradeable" version. Once the YAML metadata is loaded into the language, this is translated into either a floating-point number or nil (to refer to the default upgradeable version).
 
-Notes re YAML data representation:
----------------------------------
 
-For a quark, the "version" entry should be a sub-dictionary with fixed version numbers as keys. On the other hand, to provide info about your current latest version (the "HEAD" or development version, perhaps), you do not put this inside "version" but in the root. For example:
+QUARK AUTHORS do not need to provide "versions" info - by default, just one single default version is used. The most important time you need multiple versions is when there are different compatibility criteria.
+
+For a quark, the "versions" entry should be a sub-dictionary with fixed version numbers as keys. On the other hand, to provide info about your current latest version (the "HEAD" or development version, perhaps), you do not put this inside "versions" but in the root. For example:
 
 	{
 	crazylib: {
-	        version: {
+	        versions: {
 	                0.2: {
 	                        compat: [3.6],
 	                        fetchInfo: {tag: "V0.2final"}

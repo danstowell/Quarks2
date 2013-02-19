@@ -238,41 +238,43 @@ Quarks2 {
 		// This decision shouldn't affect the foldername btw, since it never returns "latest", always a specific version.
 		var candidates, winner;
 		scversion = this.pr_scversionString(scversion);
-		if(quarklist[name]["version"].isNil){
-			if(quarkversion.isNil){
-				// if quark entry knows no version, then requesting nil (==latest) is OK. check compat and return nil.
-				if(quarklist[name]["compat"].notNil and:{quarklist[name]["compat"].includesEqual(scversion).not}){
-					Error("Quark % not marked as compatible with SC version %".format(name, scversion)).throw
-				};
-				if(quarklist[name]["platform"].notNil and:{quarklist[name]["platform"].includesEqual(thisProcess.platform.asString).not}){
-					Error("Quark % not marked as compatible with platform %".format(name, thisProcess.platform)).throw
-				};
+
+		if(quarkversion.isNil){  // nil means happy with the default/dev version, so check that first.
+			if( // return nil (==default) iff the default is marked as compatible.
+				(quarklist[name]["compat"  ].isNil or:{quarklist[name]["compat"  ].includesEqual(scversion)}) and:
+				{quarklist[name]["platform"].isNil or:{quarklist[name]["platform"].includesEqual(thisProcess.platform.asString)}}){
 				^nil
-			}{
+			};
+		}{ // user requested a specific version - check compatibility, return if it works, error if not
+			var chosenversion;
+			if(quarklist[name]["version"].isNil){
 				Error("Quark % has no version information, but version % requested".format(name, quarkversion)).throw
 			};
-		}{
-			if(quarkversion.notNil and: {quarklist[name]["version"][quarkversion].isNil}){
+			chosenversion = quarklist[name]["version"][quarkversion];
+			if(chosenversion.isNil){
 				Error("Version '%' not listed in metadata for Quark '%'".format(quarkversion, name)).throw;
-			}
+			};
+			if(chosenversion["compat"].notNil and:{chosenversion["compat"].includesEqual(scversion).not}){
+				Error("Quark % version % not marked as compatible with SC version %".format(name, quarkversion, scversion)).throw
+			};
+			if(chosenversion["platform"].notNil and:{chosenversion["platform"].includesEqual(thisProcess.platform.asString).not}){
+				Error("Quark % version % not marked as compatible with platform %".format(name, quarkversion, thisProcess.platform)).throw
+			};
+			^chosenversion
 		};
-		// get a filtered list of the versions compat with this version
+
+		// From here on, we know we want to return a version (not nil), though the user's request was generic.
+		// So we need to try and find a good one.
 		candidates = quarklist[name]["version"].select{|ver|
 			(ver["compat"  ].isNil or: {ver["compat"  ].includesEqual(scversion)})
 			and:
 			{ver["platform"].isNil or: {ver["platform"].includesEqual(thisProcess.platform.asString)}}
 		};
-		if(candidates.size==0){ Error("Found no compatible version of quark % with % on %"
-			.format(name, scversion, thisProcess.platform)).throw };
-		if(quarkversion.notNil){ // locate in filtered list, error if not
-			winner = candidates[quarkversion];
-			if(winner.isNil){ Error("Quark % version % not marked as being compatible with % on %"
-				.format(name, quarkversion, scversion, thisProcess.platform)).throw };
-			winner["version"] = quarkversion;
-		}{ // if quarkversion is nil, find latest compatible version, return that
-			winner = candidates[candidates.keys.asArray.sort.last];
-			winner["version"] = candidates.keys.asArray.sort.last;
-		}
+		if(candidates.size==0){
+			Error("Found no compatible version of quark % with % on %".format(name, scversion, thisProcess.platform)).throw
+		};
+		winner = candidates[candidates.keys.asArray.sort.last];
+		winner["version"] = candidates.keys.asArray.sort.last;
 		^winner
 	}
 

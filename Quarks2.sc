@@ -185,7 +185,7 @@ Quarks2 {
 				File.copy(uri, path);
 			},
 			\http, {
-				var cmd = "curl % -o %".format(escapedUri, escapedPath); // dependency: curl
+				var cmd = "curl -L % -o %".format(escapedUri, escapedPath); // dependency: curl
 				cmd.systemCmd
 			},
 			\git, {
